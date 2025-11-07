@@ -1,4 +1,4 @@
-# src/medical_bot.py (Final Streaming Version)
+# src/medical_bot.py (Improved Error Messaging Version)
 
 from openai import OpenAI
 import base64
@@ -31,8 +31,8 @@ class MedicalVisionBot:
                 arr = dcm.pixel_array
                 
                 if arr.dtype != np.uint8 and arr.max() > 0:
-                     arr = ((arr - arr.min()) / (arr.max() - arr.min())) * 255
-                     arr = arr.astype(np.uint8)
+                    arr = ((arr - arr.min()) / (arr.max() - arr.min())) * 255
+                    arr = arr.astype(np.uint8)
 
                 img = Image.fromarray(arr)
                 buf = io.BytesIO()
@@ -56,7 +56,8 @@ class MedicalVisionBot:
             if image_bytes:
                 encoded = self._encode_image(image_bytes)
                 if not encoded:
-                    raise ValueError("Unreadable or unsupported image format.")
+                    yield {"success": False, "error": "❗ Unsupported or corrupted image format."}
+                    return
 
             system_content = DISCLAIMER + "Describe visible medical patterns clearly, safely, and professionally. Maintain a highly professional and cautious tone. Always re-state the disclaimer."
             
@@ -89,6 +90,34 @@ class MedicalVisionBot:
                     yield {"success": True, "chunk": content}
 
         except Exception as e:
-            error_message = f"API or Chat Completion Error: {e}"
-            print(error_message)
-            yield {"success": False, "error": error_message}
+            err = str(e)
+
+            # ✅ Special case: free model limit reached (429)
+            if "429" in err or "rate limit" in err.lower():
+                yield {
+                    "success": False,
+                    "error": "🚨 **Free Model Limit Reached** — You have exhausted today’s free requests. Try again after 24 hours."
+                }
+                return
+
+            # ✅ API Key invalid / missing
+            if "401" in err or "invalid api key" in err.lower():
+                yield {
+                    "success": False,
+                    "error": "❌ **Invalid API Key** — Please check your key in Streamlit secrets."
+                }
+                return
+
+            # ✅ OpenRouter / network issues
+            if "Failed to establish a new connection" in err or "timeout" in err.lower():
+                yield {
+                    "success": False,
+                    "error": "🌐 **Network or provider error** — Cannot reach model right now. Try again later."
+                }
+                return
+
+            # ✅ Fallback for unknown errors
+            yield {
+                "success": False,
+                "error": f"⚠ Unexpected Error: {err}"
+            }
