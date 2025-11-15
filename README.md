@@ -2,9 +2,6 @@
 
 <div align="center">
 
-<!-- Banner -->
-<img src="https://via.placeholder.com/1200x400/1e40af/ffffff?text=MedNova+AI+🏥+Medical+Vision+Chatbot" alt="MedNova Banner" style="border-radius: 15px; margin: 20px 0;">
-
 <!-- Badges -->
 <div align="center">
 
@@ -584,3 +581,4 @@ pytest tests/integration/ -v
 [![Star](https://img.shields.io/github/stars/Dibyendu17122003/MEDICAL-CHATBOT-GENAI-PROJECT?style=social)](https://github.com/Dibyendu17122003/MEDICAL-CHATBOT-GENAI-PROJECT)
 
 </div>
+
